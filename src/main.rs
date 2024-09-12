@@ -1,7 +1,7 @@
 use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, CommandFactory};
 use dirs::home_dir;
 
 const CONFIG_F: &str = ".cp_cli_config";
@@ -34,7 +34,7 @@ fn generate_file(filename: &str, template_path: &str) -> std::io::Result<()> {
 
 fn create_file_command(filename: &str, template_path: &str) {
     match generate_file(filename, template_path) {
-        Ok(_) => println!("File created and asdfasdf!"),
+        Ok(_) => println!("File created"),
         Err(e) => eprintln!("Error creating file: {}", e),
     }
 }
@@ -109,6 +109,8 @@ fn main() {
                 println!("Default template set to: {}", template_path);
             }
         }
-        None => {}
+        None => {
+            let _ = Cli::command().print_help();
+        }
     }
 }
