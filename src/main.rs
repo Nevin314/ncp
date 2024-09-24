@@ -1,8 +1,11 @@
 use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::process::Command;
 use clap::{Parser, Subcommand, CommandFactory};
 use dirs::home_dir;
+use std::io;
+use scraper::{Html, Selector};
 
 const CONFIG_F: &str = ".cp_cli_config";
 
@@ -38,6 +41,43 @@ fn create_file_command(filename: &str, template_path: &str) {
         Err(e) => eprintln!("Error creating file: {}", e),
     }
 }
+
+fn get_sample_output(contest_number: &str, problem_let: &str) -> String {
+    let output = Command::new("curl")
+        .arg("-A")
+        .arg("Mozilla/5.0")
+        .arg(format!("https://codeforces.com/contest/{contest_number}/problem/{problem_let}"))
+        .output()
+        .expect("Failed the command :(");
+
+    println!("status: {}", output.status);
+    //io::stdout().write_all(&output.stdout).unwrap();
+
+    let mut sample_output = "".to_string();
+    if output.status.success() {
+        let html_content = String::from_utf8_lossy(&output.stdout);
+
+        let document = Html::parse_document(&html_content);
+
+        let selector = Selector::parse("div.output").unwrap();
+            
+        for element in document.select(&selector) {
+            let text = element.text().collect::<Vec<_>>().join(" ");
+
+            sample_output.push_str(&text);
+        }
+        
+
+        // lazy: removing "Output"
+        sample_output = sample_output[7..].to_string();
+        //println!("{}", sample_output);
+    } else {
+        io::stderr().write_all(&output.stderr).unwrap();
+    }
+
+    sample_output
+}
+
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -87,6 +127,7 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
+    println!("{}", get_sample_output("2006", "E")); 
 
     match &cli.command {
         Some(Commands:: New { filename, template }) => {

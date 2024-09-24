@@ -6,3 +6,4 @@ about = "A competitive programming CLI tool written in Rust by nevinv"
 [dependencies]
 clap = { version = "4.5.16", features = ["derive"] }
 dirs = "5.0.1"
+scraper = "0.20.0"
