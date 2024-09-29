@@ -1,10 +1,9 @@
-use std::fs;
+use std::{fs, env, io};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use clap::{Parser, Subcommand, CommandFactory};
 use dirs::home_dir;
-use std::io;
 use scraper::{Html, Selector};
 
 const CONFIG_F: &str = ".cp_cli_config";
@@ -78,6 +77,23 @@ fn get_sample_output(contest_number: &str, problem_let: &str) -> String {
     sample_output
 }
 
+fn run_code(filename: &str) -> String {
+    let curr_path = env::current_dir().unwrap();
+    let p = curr_path.display();
+    //println!("{}", format!("{}/{}", &p, filename));
+    let output = Command::new(format!("{}/{}", &p, filename)) 
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to execute child")
+        .wait_with_output()
+        .expect("failed to wait");
+
+    let res = String::from_utf8_lossy(&output.stdout);
+    res.to_string()
+    //"".to_string()
+}
+
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -123,12 +139,19 @@ enum Commands {
         list: bool,
     },
     */
+
+    RunSample {
+        contest_number: String,
+
+        problem_let: String, 
+    }
 }
 
 fn main() {
     let cli = Cli::parse();
-    println!("{}", get_sample_output("2006", "E")); 
-
+    //println!("{}", get_sample_output("2006", "E")); 
+    //let a = run_code("A");
+    //let _b = run_code("B");
     match &cli.command {
         Some(Commands:: New { filename, template }) => {
             let template_path = template
@@ -149,6 +172,24 @@ fn main() {
             } else {
                 println!("Default template set to: {}", template_path);
             }
+        }
+        Some(Commands::RunSample {contest_number, problem_let}) => {
+            let correct_output = get_sample_output(contest_number, problem_let);
+            let our_output = run_code(problem_let);
+
+            let mut incorrect = "".to_string(); 
+            for (c1, c2) in correct_output.chars().filter(|&c| c != '\n').zip(our_output.chars().filter(|&c| c != '\n')) {
+                if c1 != c2 {
+                    incorrect.push_str(&format!("{} not equal to {}!", c1, c2));
+                    incorrect.push_str("\n");
+                }
+            }
+            if incorrect != "" {
+                println!("{}", incorrect)
+            } else {
+                println!("Passed sample cases!");
+            }
+
         }
         None => {
             let _ = Cli::command().print_help();
