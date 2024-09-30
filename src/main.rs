@@ -5,6 +5,8 @@ use std::process::{Command, Stdio};
 use clap::{Parser, Subcommand, CommandFactory};
 use dirs::home_dir;
 use scraper::{Html, Selector};
+use colored::*;
+
 
 const CONFIG_F: &str = ".cp_cli_config";
 
@@ -49,7 +51,7 @@ fn get_sample_output(contest_number: &str, problem_let: &str) -> String {
         .output()
         .expect("Failed the command :(");
 
-    println!("status: {}", output.status);
+    //println!("status: {}", output.status); 
     //io::stdout().write_all(&output.stdout).unwrap();
 
     let mut sample_output = "".to_string();
@@ -185,9 +187,9 @@ fn main() {
                 }
             }
             if incorrect != "" {
-                println!("{}", incorrect)
+                println!("{}", incorrect.red().bold());
             } else {
-                println!("Passed sample cases!");
+                println!("{}", "Passed sample cases!".green().bold());
             }
 
         }
